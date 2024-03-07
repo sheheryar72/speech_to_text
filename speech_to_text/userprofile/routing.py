@@ -6,3 +6,9 @@ from . import consumers
 websocket_urlpatterns = [
     path('ws/speech-to-text/', consumers.SpeechToTextConsumer),
 ]
+
+
+
+
+    
+
