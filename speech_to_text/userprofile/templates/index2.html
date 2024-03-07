@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Recorder</title>
+</head>
+<body>
+<h1>Voice Recorder</h1>
+<form id="messageForm" action="http://localhost:8084/user/convert2/" method="POST" enctype="multipart/form-data">
+    <textarea id="messageInput" name="text" placeholder="Type your message here..."></textarea>
+    <input type="file" id="audioFile" name="audio_file" style="display:none;">
+</form>
+<div>
+    <button id="startRecordingButton" onclick="startRecording()">Start Recording</button>
+    <button id="stopRecordingButton" onclick="stopRecording()" disabled>Stop Recording</button>
+</div>
+<script>
+let audioStream = null;
+let mediaRecorder = null;
+let audioChunks = [];
+
+const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function (stream) {
+            audioStream = stream;
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+            mediaRecorder.start();
+            document.getElementById('startRecordingButton').disabled = true;
+            document.getElementById('stopRecordingButton').disabled = false;
+            console.log('Recording started');
+        }).catch(function (err) {
+            console.error('Error:', err);
+        });
+};
+
+const stopRecording = () => {
+    if (mediaRecorder && audioStream) {
+        mediaRecorder.stop();
+        audioStream.getTracks().forEach(track => track.stop());
+        document.getElementById('startRecordingButton').disabled = false;
+        document.getElementById('stopRecordingButton').disabled = true;
+        console.log('Recording stopped');
+        sendForm();
+    }
+};
+
+const sendForm = () => {
+    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+
+    var file2 =  document.getElementById("audioFile");
+
+    console.log("blob: ", blob)
+    console.log("file2: ", file2)
+
+    const formData = new FormData();
+    formData.append('audio_file', blob);
+    const text = document.getElementById('messageInput').value;
+    formData.append('text', text);
+
+    const form = document.getElementById('messageForm');
+    const fileInput = document.getElementById('audioFile');
+    fileInput.files = [blob]; // Assign the recorded audio file to the file input
+
+    form.submit();
+};
+
+</script>
+</body>
+</html>
